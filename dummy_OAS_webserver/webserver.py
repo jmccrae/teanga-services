@@ -78,7 +78,7 @@ def wordembeddings():
                 $ref: "#/components/schemas/Embeddings"
     """
 #}}
-    return jsonify([[1.2, 1.0],[3.13, 4.1]]) #jsonify({f'sentence_list':[[1.2,1.0],[3.13,4.1]]})
+    return jsonify({"embeddings":[[1.2, 1.0],[3.13, 4.1]]}) #jsonify({f'sentence_list':[[1.2,1.0],[3.13,4.1]]})
 
 if __name__ == "__main__":
     webserver.run("0.0.0.0",
