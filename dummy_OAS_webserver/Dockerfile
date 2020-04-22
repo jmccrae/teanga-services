@@ -7,9 +7,9 @@ RUN apt-get install -y python3-pip python3-dev
 
 WORKDIR /app
 copy ./r.txt r.txt
+RUN pip3 install -r r.txt
 copy ./ /app
 RUN chmod +x /app
-RUN pip3 install -r r.txt
 RUN mkdir /app/output
 #CMD ["gunicorn" ,"-w 1" ,"-b 0.0.0.0:4000" ,"webserver:webserver"]
 copy ./openapi.yaml /openapi.yaml
