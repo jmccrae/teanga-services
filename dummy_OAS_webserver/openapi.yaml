@@ -35,9 +35,15 @@ paths:
     post:
       summary: calculate word embeddings for each sentence in as list of sentences
       operationId: calculateWordEmbeddings 
+      requestBody:
+          required: true
+          content:
+              application/json:
+                schema:
+                    $ref: "#/components/schemas/Words"
       responses:
         '200':
-          description: A paged array of words
+          description: word embbedings foreach word of a list of words 
           content:
             application/json:    
               schema:
@@ -47,19 +53,12 @@ components:
     Word:
       type: string
     Words:
-      type: object
-      required:
-        - word_list 
-      properties:
-        word_list:
-          type: array
-          items:
-            $ref: "#/components/schemas/Word"
-    Embedding:
-      type: array
-      items:
-          type: float
+      type: string
+      additionalProperties: {}
     Embeddings:
+      type: string
+      additionalProperties: {}
+    Embedding:
       type: array
       items:
           type: array
