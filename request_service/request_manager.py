@@ -12,17 +12,63 @@ import inspect
 import json
 import yaml
 
+def create_api_client(base_folder, OAS_folder, 
+                      serviceOAS_absPath):
+    service_id    = serviceOAS_absPath.split("/")[-1].replace(".yaml","")
+    serviceClient_name = "client_"+service_id
+    serviceClient_pkgFolder = os.path.join("/teanga/clients",
+                                           serviceClient_name)
 
-for service in []:
-    dummyid_client = importlib.import_module(service)
-    from dummyid_client.rest import ApiException
-    with dummyid_client.ApiClient() as api_client:
-        # Create an instance of the API class
-        api_instance = dummyid_client.DefaultApi(api_client)
-        
-        try:
-            # calculate word embeddings for each sentence in as list of sentences
-            api_response = api_instance.calculate_word_embeddings()
-            pprint(api_response)
-        except ApiException as e:
-            print("Exception when calling DefaultApi->calculate_word_embeddings: %s\n" % e)
+    createClient_cmd = shlex.split(f'./create_client.sh {serviceOAS_absPath} {service_id}')
+    subprocess.call(createClient_cmd) 
+    os.chdir(serviceClient_pkgFolder)
+    pip.main(["install","."])
+    os.chdir(base_folder)
+    client = importlib.import_module("client_"+service_id)
+    return client 
+
+def execute_api_client(client,       serviceOAS_filepath,
+                       workflow_idx, workflow):
+    workflow_data = workflow[workflow_idx]
+    service_input = workflow_data.get("input",{})
+    with client.ApiClient() as api_client:
+        api_instance = client.DefaultApi(api_client)
+        api_method = getattr(api_instance,
+                        workflow_data["operation_id"])
+        if "request_body" in inspect.getargspec(api_method)[0]:
+            request_body = {"request_body":service_input}
+            service_input = request_body
+        api_response= api_method(**service_input)
+        response_dict = json.dumps(api_response)
+        workflow[workflow_idx]["input"] = service_input
+        workflow[workflow_idx]["output"] = eval(response_dict)
+
+        return workflow
+
+if __name__ == "__main__":
+    try:
+        base_folder=os.path.dirname(os.path.abspath(__file__))
+        OAS_folder=os.path.join(base_folder,"OAS")
+        os.chdir(base_folder), 
+        workflow_file = os.path.join(base_folder,"workflows","example_flaskapp.json")
+
+        workflow = json.load(open(workflow_file))
+        OAS_specifications = {fn.split("_")[0]:
+                                {
+                                    "filepath":os.path.join(OAS_folder,fn),
+                                    "OAS":yaml.load(open(os.path.join(OAS_folder,fn))),
+                                }
+                                for fn in sorted(os.listdir(OAS_folder))
+                             }
+        for (workflow_idx, serviceOAS) in OAS_specifications.items():
+            client = create_api_client(
+                        base_folder, OAS_folder, serviceOAS["filepath"],
+                     )
+            workflow = execute_api_client(client,       serviceOAS["filepath"],
+                                          workflow_idx, workflow)
+        with open("./IO/IO.json","w") as IO_file: 
+            IO_file.write(json.dumps(workflow))
+
+    except Exception as Error:
+        with open("error_log","a+") as log:
+            log.write(str(Error)+"\n")
