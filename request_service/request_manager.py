@@ -89,7 +89,7 @@ if __name__ == "__main__":
         base_folder=os.path.dirname(os.path.abspath(__file__))
         OAS_folder=os.path.join(base_folder,"OAS")
         os.chdir(base_folder), 
-        workflow_file = os.path.join(base_folder,"workflows","dev_workflow.json")
+        workflow_file = os.path.join(base_folder,"workflows","deploy_workflow.json")
 
         workflow = json.load(open(workflow_file))
         OAS_specifications = {fn.split("_")[0]:
