@@ -1,6 +1,8 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 #from flasgger import Swagger
 import pandas as pd
+import numpy as np
+
 
 
 import collections
@@ -45,10 +47,10 @@ def topK_words(language, number_of_words):
     with open("top_1000_English_words.csv") as rank:
         df_rank = pd.read_csv(rank)
         list_of_topWords = [word for word in df_rank["word"][:number_of_words]]
-        return jsonify({f'word_list':list_of_topWords})#jsonify(list_of_topWords)
+        return jsonify(list_of_topWords)#jsonify({f'word_list':list_of_topWords})
 
-@webserver.route("/wordembeddings",methods=["POST"])
-def wordembeddings():
+@webserver.route("/wordembeddings/<number_of_dimensions>",methods=["POST"])
+def wordembeddings(number_of_dimensions):
 #{{ OpenAPI Specification
     """
   /wordembeddings:
@@ -78,7 +80,10 @@ def wordembeddings():
                 $ref: "#/components/schemas/Embeddings"
     """
 #}}
-    return jsonify({"embeddings":[[1.2, 1.0],[3.13, 4.1]]}) #jsonify({f'sentence_list':[[1.2,1.0],[3.13,4.1]]})
+    number_of_dimensions = int(number_of_dimensions)
+    words=eval(request.data)
+    embeddings=np.random.random([len(words),number_of_dimensions]).tolist()
+    return jsonify(embeddings) 
 
 if __name__ == "__main__":
     webserver.run("0.0.0.0",
