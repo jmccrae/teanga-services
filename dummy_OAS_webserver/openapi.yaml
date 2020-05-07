@@ -58,15 +58,11 @@ paths:
                 $ref: "#/components/schemas/Embeddings"
 components:
   schemas:
-    Word:
-      type: string
     Words:
-      type: string
-      additionalProperties: {}
+      type: array 
+      items:
+          type: string
     Embeddings:
-      type: string
-      additionalProperties: {}
-    Embedding:
       type: array
       items:
           type: array
