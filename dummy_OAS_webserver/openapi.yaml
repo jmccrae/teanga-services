@@ -31,10 +31,18 @@ paths:
             application/json:    
               schema:
                 $ref: "#/components/schemas/Words"
-  /wordembeddings:
+  /wordembeddings/{number_of_dimensions}:
     post:
       summary: calculate word embeddings for each sentence in as list of sentences
       operationId: calculateWordEmbeddings 
+      parameters:
+        - name: number_of_dimensions
+          in: path
+          description: How many dim in the wordembeddings
+          required: true 
+          schema:
+            type: integer
+            format: int32
       requestBody:
           required: true
           content:
