@@ -8,7 +8,7 @@ paths:
   /vocabulary/{language}/top/{number_of_words}:
     get:
       summary: List all words
-      operationId: list_top_k
+      operationId: listTopK
       parameters:
         - name: language
           in: path
@@ -31,18 +31,10 @@ paths:
             application/json:    
               schema:
                 $ref: "#/components/schemas/Words"
-  /wordembeddings/{number_of_dimensions}:
+  /wordembeddings:
     post:
       summary: calculate word embeddings for each sentence in as list of sentences
-      operationId: calculate_word_embeddings 
-      parameters:
-        - name: number_of_dimensions
-          in: path
-          description: How many dim in the wordembeddings
-          required: true 
-          schema:
-            type: integer
-            format: int32
+      operationId: calculateWordEmbeddings 
       requestBody:
           required: true
           content:
@@ -58,11 +50,15 @@ paths:
                 $ref: "#/components/schemas/Embeddings"
 components:
   schemas:
+    Word:
+      type: string
     Words:
-      type: array 
-      items:
-          type: string
+      type: string
+      additionalProperties: {}
     Embeddings:
+      type: string
+      additionalProperties: {}
+    Embedding:
       type: array
       items:
           type: array
