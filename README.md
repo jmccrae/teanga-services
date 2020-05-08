@@ -30,7 +30,7 @@ CMD ["sh","-c","/app/webserver.sh ${PORT}"]
 ### OpenApi-specification
 #### follow  [open-api specifications][https://www.openapis.org/about] to describe api. good documentation can be found at [swagger documentation][https://swagger.io/docs/specification/about/]
 #### Inputs and Outputs must follow both [json-ld][https://json-ld.org/] and open-api specifications 
-#### Unamed inputs and outputs are not accepted
+#### Unamed inputs and outputs should be avoided
 ### Example
 ```
 openapi: "3.0.0"
@@ -43,7 +43,7 @@ paths:
   /vocabulary/{language}/top/{number_of_words}:
     get:
       summary: List all words
-      operationId: listTopK
+      operationId: list_top_k
       parameters:
         - name: language
           in: path
@@ -66,10 +66,18 @@ paths:
             application/json:    
               schema:
                 $ref: "#/components/schemas/Words"
-  /wordembeddings:
+  /wordembeddings/{number_of_dimensions}:
     post:
       summary: calculate word embeddings for each sentence in as list of sentences
-      operationId: calculateWordEmbeddings 
+      operationId: calculate_word_embeddings 
+      parameters:
+        - name: number_of_dimensions
+          in: path
+          description: How many dim in the wordembeddings
+          required: true 
+          schema:
+            type: integer
+            format: int32
       requestBody:
           required: true
           content:
@@ -86,9 +94,13 @@ paths:
 components:
   schemas:
     Words:
-      type: string
-      additionalProperties: {}
+      type: array 
+      items:
+          type: string
     Embeddings:
-      type: string
-      additionalProperties: {}
+      type: array
+      items:
+          type: array
+          items:
+            type: float
 ```
