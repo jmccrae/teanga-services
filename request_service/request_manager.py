@@ -34,11 +34,38 @@ def flatten_info(OAS, operationId):
     for url in OAS['paths'].keys():
         for request_method in OAS['paths'][url].keys():
             operation_data=OAS['paths'][url][request_method]
-            print(operation_data.keys())
-            parameters =  operation_data.get("parameters",[])
-            sucess_response = operation_data["responses"]["200"]
-    schemas = OAS['components']['schemas']
-    return parameters, sucess_response, schemas 
+            if operation_data["operationId"] == operationId:
+                flatten["parameters"] =  operation_data.get("parameters",[])
+                flatten["requestBody"] =  operation_data.get("requestBody",{})
+                flatten["sucess_response"] = operation_data["responses"]["200"]
+                flatten["response_schemas"] = flatten["sucess_response"]['content']['application/json']['schema']
+    flatten["schemas"] = OAS['components']['schemas']
+    return flatten 
+
+def match_input(currService_flattenedOAS, given_input, dependecies_inputs, dependecies_outputs):
+    service_input = {}
+    named_candidates = ChainMap(given_input, *dependecies_outputs, *dependecies_inputs)
+    schemas_candidates = ChainMap(*dependecies_outputs, *dependecies_inputs)
+    missing_parameters = []
+    for expected_parameter in currService_flattenedOAS["parameters"]:
+        parameter_name = expected_parameter['name']
+        value = named_candidates.get(parameter_name, False)
+        if value == False: missing_parameters.append(parameter_name)
+        else: 
+            expected_schema = [d for d 
+                    in currService_flattenedOAS["parameters"] 
+                    if d["name"] == parameter_name ][0] 
+            service_input[parameter_name] = {"value":value, "schema":expected_schema} 
+
+    if currService_flattenedOAS["requestBody"]:
+        schema_name = currService_flattenedOAS["requestBody"]['content']['application/json']['schema']['$ref'].split("/")[-1]
+        requestBody_value = schemas_candidates.get(schema_name, {"value":{}})
+        expected_requestBody_schema = currService_flattenedOAS['schemas'][schema_name]
+        service_input["request_body"] = requestBody_value
+    schema_name = currService_flattenedOAS["response_schemas"]["$ref"].split("/")[-1]
+    requestBody_value = currService_flattenedOAS["schemas"][schema_name]
+    expected_output_schema = {"name":schema_name,"schema":schema}  
+    return service_input, expected_output_schema 
 
 def execute_api_client(client,       servicesOAS,
                        workflow_idx, workflow):
