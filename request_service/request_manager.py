@@ -62,9 +62,12 @@ def match_input(currService_flattenedOAS, given_input, dependecies_inputs, depen
         requestBody_value = schemas_candidates.get(schema_name, {"value":{}})
         expected_requestBody_schema = currService_flattenedOAS['schemas'][schema_name]
         service_input["request_body"] = requestBody_value
-    schema_name = currService_flattenedOAS["response_schemas"]["$ref"].split("/")[-1]
-    requestBody_value = currService_flattenedOAS["schemas"][schema_name]
-    expected_output_schema = {"name":schema_name,"schema":schema}  
+        schema_name = currService_flattenedOAS["response_schemas"]["$ref"].split("/")[-1]
+        requestBody_value = currService_flattenedOAS["schemas"][schema_name]
+
+    expOut_name = currService_flattenedOAS["response_schemas"]["$ref"].split("/")[-1]
+    expected_output_schema = {"name":expOut_name,
+                              "schema":currService_flattenedOAS["schemas"][expOut_name]}  
     return service_input, expected_output_schema 
 
 def execute_api_client(client,       servicesOAS,
