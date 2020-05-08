@@ -69,52 +69,51 @@ def match_input(currService_flattenedOAS, given_input, dependecies_inputs, depen
 
 def execute_api_client(client,       servicesOAS,
                        workflow_idx, workflow):
-    workflow_data = workflow[workflow_idx]
-    description_data = servicesOAS[workflow_idx]
-    dependecies_OAS = [servicesOAS[workflow_idx]  
-    opId_to_endpoint = operationId_to_endpoint(description_data['OAS']['paths'])
-    expected_inputs, expected_response, schemas = flatten_info(description_data['OAS'])
+    currService_workflow = workflow[workflow_idx]
+    currService_OAS = servicesOAS[workflow_idx]
+    dependecies_OAS = [flatten_info(servicesOAS[workflow_idx]['OAS'], workflow_idx)
+                        for workfolow_idx in currService_workflow['dependencies']]  
+    dependecies_inputs = [workflow[workflow_idx]["input"]
+                        for workflow_idx in currService_workflow['dependencies']]  
+    dependecies_outputs = [{workflow[workflow_idx]["output"]["schema"]["name"]:workflow[workflow_idx]["output"]}
+                        for workflow_idx in currService_workflow['dependencies']]  
 
-    expected_inputs = description_data['OAS']
-    service_input = workflow_data.get("input",{})
+    currService_flattenedOAS= flatten_info(currService_OAS['OAS'], currService_workflow["operation_id"])
+    given_input = currService_workflow.get("input",{})
+    service_input, expected_output_schema =\
+            match_input(currService_flattenedOAS, given_input, dependecies_inputs, dependecies_outputs) 
+    service_name_val = {name:d["value"] for (name,d) in service_input.items()}
     with client.ApiClient() as api_client:
         api_instance = client.DefaultApi(api_client)
         api_method = getattr(api_instance,
-                        workflow_data["operation_id"])
-        if "request_body" in inspect.getargspec(api_method)[0]:
-            request_body = {"request_body":service_input}
-            service_input = request_body
-        api_response= api_method(**service_input)
+                        currService_workflow["operation_id"])
+        api_response= api_method(**service_name_val)
         response_dict = json.dumps(api_response)
         workflow[workflow_idx]["input"] = service_input
-        workflow[workflow_idx]["output"] = eval(response_dict)
+        workflow[workflow_idx]["output"] = {"value":eval(response_dict),"schema":expected_output_schema}
         return workflow
 
 if __name__ == "__main__":
-    try:
-        base_folder=os.path.dirname(os.path.abspath(__file__))
-        OAS_folder=os.path.join(base_folder,"OAS")
-        os.chdir(base_folder), 
-        workflow_file = os.path.join(base_folder,"workflows","deploy_workflow.json")
+    base_folder=os.path.dirname(os.path.abspath(__file__))
+    OAS_folder=os.path.join(base_folder,"OAS")
+    os.chdir(base_folder), 
+    workflow_file = os.path.join(base_folder,"workflows","dev_workflow.json")
 
-        workflow = json.load(open(workflow_file))
-        OAS_specifications = {fn.split("_")[0]:
-                                {
-                                    "filepath":os.path.join(OAS_folder,fn),
-                                    "OAS":yaml.load(open(os.path.join(OAS_folder,fn))),
-                                }
-                                for fn in sorted(os.listdir(OAS_folder))
-                             }
+    workflow = json.load(open(workflow_file))
+    OAS_specifications = {fn.split("_")[0]:
+                            {
+                                "filepath":os.path.join(OAS_folder,fn),
+                                "OAS":yaml.load(open(os.path.join(OAS_folder,fn))),
+                            }
+                            for fn in sorted(os.listdir(OAS_folder))
+                         }
 
-        for (workflow_idx, serviceOAS) in OAS_specifications.items():
-            client = create_api_client(
-                        base_folder, OAS_folder, serviceOAS["filepath"],
-                     )
-            workflow = execute_api_client(client, OAS_specifications,
-                                          workflow_idx, workflow)
-        with open("./IO/IO.json","w") as IO_file: 
-            IO_file.write(json.dumps(workflow))
+    for (workflow_idx, serviceOAS) in OAS_specifications.items():
+        client = create_api_client(
+                    base_folder, OAS_folder, serviceOAS["filepath"],
+                 )
+        workflow = execute_api_client(client, OAS_specifications,
+                                      workflow_idx, workflow)
+    with open("./IO/IO.json","w") as IO_file: 
+        IO_file.write(json.dumps(workflow))
 
-    except Exception as Error:
-        with open("error_log","a+") as log:
-            log.write(str(Error)+"\n")
