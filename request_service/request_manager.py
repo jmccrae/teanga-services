@@ -20,39 +20,17 @@ def create_api_client(base_folder, OAS_folder,
     serviceClient_pkgFolder = os.path.join("/teanga/clients",
                                            serviceClient_name)
 
-    """
     createClient_cmd = shlex.split(f'./create_client.sh {serviceOAS_absPath} {service_id}')
     subprocess.call(createClient_cmd) 
     os.chdir(serviceClient_pkgFolder)
     pip.main(["install","."])
     os.chdir(base_folder)
-    """
     client = importlib.import_module("client_"+service_id)
     return client 
 
-def check_union(expected_inputs, dependencies_outputs, dependencies_inputs):
-    matches  = [parameter_name  
-                    for parameter_name in expected_inputs
-                        if((parameter_name in dependencies_inputs) \
-                                or (parameter_name in dependencies_inputs))] 
 
-    if len(matches) == len(expected_inputs):
-        status = "validated"
-    else:
-        status = "not_validated"
-    return status
-
-
-def operationId_to_endpoint(OAS_paths):
-    map_operationId_to_endpoint = {}
-    for url in OAS_paths.keys():
-        for request_method in OAS_paths[url]:
-            operationId = OAS_paths[url][request_method]["operationId"] 
-            map_operationId_to_endpoint[operationId] = (url, request_method)
-    return map_operationId_to_endpoint
-
-def flatten_info(OAS):
-    paths_info = [] 
+def flatten_info(OAS, operationId):
+    flatten = {}
     for url in OAS['paths'].keys():
         for request_method in OAS['paths'][url].keys():
             operation_data=OAS['paths'][url][request_method]
