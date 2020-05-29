@@ -3,8 +3,6 @@ from flask import Flask, jsonify, request
 import pandas as pd
 import numpy as np
 
-
-
 import collections
 print(__file__)
 webserver = Flask(__name__)
@@ -87,5 +85,5 @@ def wordembeddings(number_of_dimensions):
 
 if __name__ == "__main__":
     webserver.run("0.0.0.0",
-                  port=8000,
+                  port=8002,
                   debug=True)
